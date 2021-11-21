@@ -58,12 +58,7 @@ resource "aws_instance" "web" {
   availability_zone      = "us-east-1a"
   user_data              = file("userdata.sh")
   tags                   = local.common_tags
-  provisioner "remote-exec" {
-    inline = [
-      "puppet apply",
-      "consul join ${aws_instance.web.private_ip}",
-    ]
-  }
+  
 }
 
 
