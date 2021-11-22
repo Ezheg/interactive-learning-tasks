@@ -1,6 +1,6 @@
 locals {
   common_tags = {
-    Name = "jenkins"
+    Name = "r1soft"
     Env  = "Dev"
     Team = "DevOps"
   }
@@ -27,14 +27,21 @@ resource "aws_security_group" "allow_tls" {
   ingress {
     description = "TLS from VPC"
     from_port   = 443
-    to_port     = 4343
-        protocol    = "tcp"
+    to_port     = 443
+    protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
   ingress {
     description = "TLS from VPC"
     from_port   = 80
     to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+   ingress {
+    description = "TLS from VPC"
+    from_port   = 8080
+    to_port     = 8080
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
@@ -56,9 +63,28 @@ resource "aws_instance" "web" {
   vpc_security_group_ids = [aws_security_group.allow_tls.id]
   key_name               = aws_key_pair.edv.key_name
   availability_zone      = "us-east-1a"
-  user_data              = file("userdata.sh")
-  tags                   = local.common_tags
-  
+  # user_data              = file("userdata.sh")
+  tags = local.common_tags
+
 }
+resource "null_resource" "r1" {
+  provisioner "remote-exec" {
+    connection {
+      type        = "ssh"
+      host        = aws_instance.web.public_dns
+      user        = "ec2-user"
+      agent       = "false"
+      private_key = file("~/.ssh/id_rsa")
+    }
 
+    inline = ["echo 'connected!'",
+      "sudo yum install wget -y",
+      "sudo wget https://tim-repo-bucket.s3.amazonaws.com/r1soft.repo -P /etc/yum.repos.d/",
+      "sudo yum install serverbackup-enterprise -y",
+      "sudo serverbackup-setup --user admin --pass r1soft",
+      "sudo /etc/init.d/cdp-server restart",
+      "sudo serverbackup-setup --http-port 8080 --https-port 443",
+    "sudo /etc/init.d/cdp-server restart"]
 
+  }
+}
