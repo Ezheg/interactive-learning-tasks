@@ -47,7 +47,7 @@ resource "aws_security_group" "allow_tls" {
 
 
 resource "aws_instance" "web" {
-  ami                    = "ami-0279c3b3186e54acd"
+  ami                    = "ami-a8d369c0"
   instance_type          = "t2.micro"
   vpc_security_group_ids = [aws_security_group.allow_tls.id]
   key_name               = aws_key_pair.edv.key_name
@@ -82,7 +82,7 @@ resource "null_resource" "example" {
     connection {
       type        = "ssh"
       host        = aws_instance.web.public_dns
-      user        = "ubuntu"
+      user        = "root"
       agent       = "false"
       private_key = file("~/.ssh/id_rsa")
     }
@@ -92,6 +92,7 @@ resource "null_resource" "example" {
       "cd /tmp",
       # "sudo -E add-apt-repository ppa:ansible/ansible",
       "sudo apt-get update",
+      "sudo apt install nagios-plugins-perl",
       "wget https://assets.nagios.com/downloads/nagiosxi/xi-latest.tar.gz",
        "tar xzf xi-latest.tar.gz",
        "cd nagiosxi",
